@@ -7,24 +7,33 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    CoordinatorLayout coordinatorLayout;
+    LocationManager locationManager;
+    LocationListener locationListener;
     Location usersCurrentLocation;
+    LinearLayout buttonPanel;
     Button addLocation;
+    Marker currentMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,12 +44,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setUpUserLocation();
 
         //Set up button listener
-        setAddLocationButton();
+        setInputs();
         addLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent addLocationForm = new Intent(MapsActivity.this, AddLocationActivity.class);
+                addLocationForm.putExtra("Location", currentMarker.getPosition().toString());
+                Bundle markerLocation = new Bundle();
+                LatLng position = currentMarker.getPosition();
+                markerLocation.putParcelable("Location", position);
+                addLocationForm.putExtra("Bundle", markerLocation);
                 startActivity(addLocationForm);
+                stopLocationListner();
             }
         });
 
@@ -64,19 +79,73 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng userLocation = new LatLng(usersCurrentLocation.getLatitude(), usersCurrentLocation.getLongitude());
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.addMarker(new MarkerOptions().position(userLocation).title("Users last know location"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom
+                (new LatLng(usersCurrentLocation.getLatitude(),
+                                usersCurrentLocation.getLongitude()),
+                        15));
+        if (ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                mMap.addMarker(new MarkerOptions().position(latLng).title("Click add location to add a rating!"));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+            }
+        });
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15));
+                marker.showInfoWindow();
+                buttonPanel.setVisibility(View.VISIBLE);
+                currentMarker = marker;
+                return false;
+            }
+        });
+        mMap.setOnInfoWindowCloseListener(new GoogleMap.OnInfoWindowCloseListener() {
+            @Override
+            public void onInfoWindowClose(Marker marker) {
+                buttonPanel.setVisibility(View.GONE);
+            }
+        });
+        mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
+            View.OnClickListener undoOnClickListner;
+            @Override
+            public void onInfoWindowLongClick(final Marker marker) {
+                marker.remove();
+                Snackbar.make(coordinatorLayout, "Marker removed", Snackbar.LENGTH_LONG)
+                        .setAction("Undo", undoOnClickListner)
+                        .show();
+
+                undoOnClickListner = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mMap.addMarker(new MarkerOptions()
+                                .position(marker.getPosition())
+                                .title("Click add location to add a rating!"));
+                    }
+                };
+            }
+        });
 
     }
 
     public void setUpUserLocation() {
         String locationProvider = LocationManager.NETWORK_PROVIDER;
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener = new LocationListener() {
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 usersCurrentLocation = location;
@@ -112,7 +181,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         usersCurrentLocation = locationManager.getLastKnownLocation(locationProvider);
     }
 
-    public void setAddLocationButton() {
+    public void setInputs() {
         addLocation = (Button) findViewById(R.id.addLocation);
+        buttonPanel = (LinearLayout) findViewById(R.id.buttonPanel);
+        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinateLayout);
+    }
+
+    public void stopLocationListner() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationManager.removeUpdates(locationListener);
     }
 }
