@@ -8,6 +8,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
@@ -30,7 +31,8 @@ public class DatabaseAccess extends AppCompatActivity{
         Bundle bundle = getIntent().getParcelableExtra("Bundle");
         String name = bundle.getString("Name");
         LatLng location = bundle.getParcelable("LatLng");
-        Post post = new Post(name, location);
+        boolean isPost = bundle.getBoolean("IsPost");
+        Post post = new Post(name, location, isPost);
         post.execute();
     }
 
@@ -41,14 +43,18 @@ public class DatabaseAccess extends AppCompatActivity{
         String name;
         double lat;
         double lng;
+        boolean isPost;
+        //For Post method
         TextView responseView;
+        Marker[] getMarkers;
         String response = null;
 
-        Post(String name, LatLng position)
+        Post(String name, LatLng position, boolean isPost)
         {
             this.name = name;
             this.lat = position.latitude;
             this.lng = position.longitude;
+            this.isPost = isPost;
         }
 
         @Override
@@ -59,6 +65,21 @@ public class DatabaseAccess extends AppCompatActivity{
 
         @Override
         protected Object doInBackground(Object[] params) {
+            if (isPost) {
+                return post();
+            }
+            else {
+                return getMethod();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            responseView.setText(response);
+        }
+
+        public String post() {
             try {
                 String urlParameters = KEY_NAME + "=" + name + "&" +
                         KEY_LAT + "=" + lat + "&" + KEY_LNG + "=" + lng;
@@ -97,10 +118,26 @@ public class DatabaseAccess extends AppCompatActivity{
             return null;
         }
 
-        @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
-            responseView.setText(response);
+        public String getMethod() {
+            try {
+                String request = "http://php-tsorenson.rhcloud.com/androidGet.php";
+                URL url = new URL(request);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                InputStream in = new BufferedInputStream(conn.getInputStream());
+                byte[] contents = new byte[1024];
+                int bytesRead=0;
+                while( (bytesRead = in.read(contents)) != -1){
+                    response += new String(contents, 0, bytesRead);
+                }
+                Log.d("Retrieved", response);
+                conn.disconnect();
+                return response;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
 }

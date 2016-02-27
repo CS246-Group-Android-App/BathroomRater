@@ -34,6 +34,7 @@ public class AddLocationActivity extends AppCompatActivity{
                 Bundle info = new Bundle();
                 info.putString("Name", locationName.getText().toString());
                 info.putParcelable("LatLng", locationForMap);
+                info.putBoolean("IsPost", true);
                 post.putExtra("Bundle", info);
                 startActivity(post);
             }
