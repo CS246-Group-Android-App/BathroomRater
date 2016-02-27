@@ -40,6 +40,8 @@
             android:label="@string/title_activity_maps"></activity>
         <activity android:name=".AddLocationActivity"
             android:label="Add Location"></activity>
+        <activity android:name=".DatabaseAccess"
+            android:label="Post to DB"></activity>
     </application>
 
 </manifest>
