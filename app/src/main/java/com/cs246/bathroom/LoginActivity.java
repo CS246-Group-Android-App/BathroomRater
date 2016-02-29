@@ -30,6 +30,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -338,8 +340,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Intent mapLaunch = new Intent(LoginActivity.this, MapsActivity.class);
-                        startActivity(mapLaunch);
+                        Intent read = new Intent(LoginActivity.this, DatabaseAccess.class);
+                        Bundle bundle = new Bundle();
+                        bundle.putString("Name", " ");
+                        bundle.putParcelable("LatLng", new LatLng(0,0));
+                        bundle.putBoolean("IsPost", false);
+                        read.putExtra("Bundle", bundle);
+                        startActivity(read);
                     }
                 });
                 finish();

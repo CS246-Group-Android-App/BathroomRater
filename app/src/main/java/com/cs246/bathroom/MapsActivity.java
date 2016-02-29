@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -34,6 +35,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LinearLayout buttonPanel;
     Button addLocation;
     Marker currentMarker;
+    int numMarkers;
+    String[] names;
+    double[] lats;
+    double[] longs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +83,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        //Read locations from Database
+        ReadLocationsFromDatabase read = new ReadLocationsFromDatabase();
+        read.execute();
 
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom
                 (new LatLng(usersCurrentLocation.getLatitude(),
@@ -199,5 +208,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         locationManager.removeUpdates(locationListener);
+    }
+
+    private class ReadLocationsFromDatabase extends AsyncTask {
+        ReadLocationsFromDatabase() {
+
+        }
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            Bundle bundle = getIntent().getParcelableExtra("Bundle");
+            numMarkers = bundle.getInt("NumberOfLocations");
+            names = bundle.getStringArray("Names");
+            lats = bundle.getDoubleArray("Lats");
+            longs = bundle.getDoubleArray("Long");
+            for (int i = 0;i < numMarkers;i++) {
+                final int finalI = i;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(lats[finalI], longs[finalI])).title(names[finalI]));
+                    }
+                });
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Snackbar.make(coordinatorLayout, numMarkers + " markers added", Snackbar.LENGTH_LONG)
+                            .show();
+                }
+            });
+        }
     }
 }
