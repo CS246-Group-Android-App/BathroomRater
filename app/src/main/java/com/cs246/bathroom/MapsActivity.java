@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
     CoordinatorLayout coordinatorLayout;
     LocationManager locationManager;
     LocationListener locationListener;
@@ -88,26 +89,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ReadLocationsFromDatabase read = new ReadLocationsFromDatabase();
         read.execute();
 
-        if(usersCurrentLocation != null) {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom
-                    (new LatLng(usersCurrentLocation.getLatitude(),
-                                    usersCurrentLocation.getLongitude()),
-                            15));
-        }
+
 
         if (ActivityCompat.checkSelfPermission
                 (this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission
                 (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+
+            //Request permission
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
             return;
         }
+
+
+
+
         mMap.setMyLocationEnabled(true);
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
@@ -134,6 +132,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
             View.OnClickListener undoOnClickListener;
+
             @Override
             public void onInfoWindowLongClick(final Marker marker) {
                 marker.remove();
@@ -179,18 +178,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            //Request permission
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
 
             return;
         }
         locationManager.requestLocationUpdates(locationProvider, 0, 0, locationListener);
         usersCurrentLocation = locationManager.getLastKnownLocation(locationProvider);
+        if (usersCurrentLocation == null) {
+            usersCurrentLocation = new Location("fakeLocation");
+            usersCurrentLocation.setLatitude(0);
+            usersCurrentLocation.setLongitude(0);
+        }
     }
 
     public void setInputs() {
@@ -211,6 +212,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         locationManager.removeUpdates(locationListener);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom
+                            (new LatLng(usersCurrentLocation.getLatitude(),
+                                            usersCurrentLocation.getLongitude()),
+                                    15));
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     private class ReadLocationsFromDatabase extends AsyncTask {
