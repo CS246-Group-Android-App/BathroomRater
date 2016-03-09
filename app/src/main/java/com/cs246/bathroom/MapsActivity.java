@@ -88,10 +88,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ReadLocationsFromDatabase read = new ReadLocationsFromDatabase();
         read.execute();
 
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom
-                (new LatLng(usersCurrentLocation.getLatitude(),
-                                usersCurrentLocation.getLongitude()),
-                        15));
+        if(usersCurrentLocation != null) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom
+                    (new LatLng(usersCurrentLocation.getLatitude(),
+                                    usersCurrentLocation.getLongitude()),
+                            15));
+        }
+
         if (ActivityCompat.checkSelfPermission
                 (this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission
@@ -130,15 +133,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
-            View.OnClickListener undoOnClickListner;
+            View.OnClickListener undoOnClickListener;
             @Override
             public void onInfoWindowLongClick(final Marker marker) {
                 marker.remove();
                 Snackbar.make(coordinatorLayout, "Marker removed", Snackbar.LENGTH_LONG)
-                        .setAction("Undo", undoOnClickListner)
+                        .setAction("Undo", undoOnClickListener)
                         .show();
 
-                undoOnClickListner = new View.OnClickListener() {
+                undoOnClickListener = new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         mMap.addMarker(new MarkerOptions()

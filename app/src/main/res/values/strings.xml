@@ -15,4 +15,6 @@
     </string>
     <string name="title_activity_maps">Map</string>
     <string name="add_location_button_name">Add location</string>
+    <string name="title_activity_maps2">Map</string>
+    <string name="google_app_id">1051853061107</string>
 </resources>

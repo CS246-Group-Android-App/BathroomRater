@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.cs246.bathroom">
+    package="com.cs246.bathroom" >
 
     <!-- To auto-complete the email text field in the login form with the user's emails -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
@@ -13,10 +13,10 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
         <activity
             android:name=".LoginActivity"
-            android:label="@string/app_name">
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -37,11 +37,13 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps"></activity>
-        <activity android:name=".AddLocationActivity"
-            android:label="Add Location"></activity>
-        <activity android:name=".DatabaseAccess"
-            android:label="Post to DB"></activity>
+            android:label="@string/title_activity_maps" />
+        <activity
+            android:name=".AddLocationActivity"
+            android:label="Add Location" />
+        <activity
+            android:name=".DatabaseAccess"
+            android:label="Post to DB" />
     </application>
 
 </manifest>
