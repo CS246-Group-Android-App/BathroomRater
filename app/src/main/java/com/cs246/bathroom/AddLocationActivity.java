@@ -61,6 +61,8 @@ public class AddLocationActivity extends AppCompatActivity{
     }
 
     public void returnToMap() {
+
+        Log.i("ActivitySwitch", "Switching to Map Activity");
         //Return to the map with the added locations
         Intent returnToMap = new Intent(AddLocationActivity.this, MapsActivity.class);
         Bundle bundle = new Bundle();
