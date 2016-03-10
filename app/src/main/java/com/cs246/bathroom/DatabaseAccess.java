@@ -71,6 +71,8 @@ import java.util.ArrayList;
                     else {
                         numMarkers = getMethod();
                     }
+                    if (numMarkers == 0)
+                        Log.d("Markers", Integer.toString(numMarkers));
                 }
             }).start();
         }

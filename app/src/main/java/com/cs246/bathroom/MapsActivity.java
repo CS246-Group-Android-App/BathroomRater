@@ -232,7 +232,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             names = bundle.getStringArray("Names");
             lats = bundle.getDoubleArray("Lats");
             longs = bundle.getDoubleArray("Long");
-            for (int i = 0;i < numMarkers;i++) {
+            for (int i = 0;i <= numMarkers;i++) {
                 final int finalI = i;
                 runOnUiThread(new Runnable() {
                     @Override
