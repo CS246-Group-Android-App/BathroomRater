@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +29,9 @@ public class AddLocationActivity extends AppCompatActivity{
         //Get location from the MapsActivity
         Bundle bundle = getIntent().getParcelableExtra("Bundle");
         locationForMap = bundle.getParcelable("Location");
+        if (locationForMap != null){
+            Log.i("markerLocation", "Pin location successfully found");
+        }
 
         //Set up all the user inputs
         setInputs();
