@@ -59,6 +59,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     private UserLoginTask mAuthTask = null;
 
+    DatabaseAccess db;
+
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
@@ -310,12 +312,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
 
-            try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
-            }
+            db = new DatabaseAccess("", new LatLng(0,0), false);
+            db.runAction();
+
 
             for (String credential : DUMMY_CREDENTIALS) {
                 String[] pieces = credential.split(":");
@@ -332,22 +331,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
-            showProgress(false);
+            showProgress(true);
 
             if (success) {
-                //Launch new Activity
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent read = new Intent(LoginActivity.this, DatabaseAccess.class);
-                        Bundle bundle = new Bundle();
-                        bundle.putString("Name", " ");
-                        bundle.putParcelable("LatLng", new LatLng(0,0));
-                        bundle.putBoolean("IsPost", false);
-                        read.putExtra("Bundle", bundle);
-                        startActivity(read);
-                    }
-                });
+                Intent returnToMap = new Intent(LoginActivity.this, MapsActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putInt("NumberOfLocations", DatabaseAccess.numMarkers);
+                bundle.putStringArray("Names", DatabaseAccess.markerName);
+                bundle.putDoubleArray("Lats", DatabaseAccess.markerLat);
+                bundle.putDoubleArray("Long", DatabaseAccess.markerLng);
+                returnToMap.putExtra("Bundle", bundle);
+                startActivity(returnToMap);
                 finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));

@@ -1,12 +1,17 @@
 package com.cs246.bathroom;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -30,72 +35,44 @@ import java.util.ArrayList;
 /**
  * Created by tyler on 2/26/16.
  */
-public class DatabaseAccess extends AppCompatActivity{
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_post_result);
-        Bundle bundle = getIntent().getParcelableExtra("Bundle");
-        String name = bundle.getString("Name");
-        LatLng location = bundle.getParcelable("LatLng");
-        boolean isPost = bundle.getBoolean("IsPost");
-        Post post = new Post(name, location, isPost);
-        post.execute();
-    }
-
-    public class Post extends AsyncTask {
+    public class DatabaseAccess {
+        //PHP database names
         public static final String KEY_NAME = "name";
         public static final String KEY_LAT = "lat";
         public static final String KEY_LNG = "lng";
+        //Gathered from constructor
         String name;
         double lat;
         double lng;
         boolean isPost;
         //For Post method
-        //TextView responseView;
         String response = null;
         //For Get Method
-        String[] markerName;
-        double[] markerLat;
-        double[] markerLng;
-        int numMarkers = 0;
+        public static String[] markerName;
+        public static double[] markerLat;
+        public static double[] markerLng;
+        public static int numMarkers;
 
-        Post(String name, LatLng position, boolean isPost) {
+        DatabaseAccess(String name, LatLng position, boolean isPost) {
             this.name = name;
             this.lat = position.latitude;
             this.lng = position.longitude;
             this.isPost = isPost;
         }
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            //responseView = (TextView) findViewById(R.id.response);
-        }
-
-        @Override
-        protected Object doInBackground(Object[] params) {
-            if (isPost) {
-                post();
-                return getMethod();
-            }
-            else {
-                return getMethod();
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
-            //responseView.setText(response);
-            Intent returnToMap = new Intent(DatabaseAccess.this, MapsActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putInt("NumberOfLocations", numMarkers);
-            bundle.putStringArray("Names", markerName);
-            bundle.putDoubleArray("Lats", markerLat);
-            bundle.putDoubleArray("Long", markerLng);
-            returnToMap.putExtra("Bundle", bundle);
-            startActivity(returnToMap);
+        public void runAction() {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (isPost) {
+                        post();
+                        numMarkers = getMethod();
+                    }
+                    else {
+                        numMarkers = getMethod();
+                    }
+                }
+            }).start();
         }
 
         public String post() {
@@ -141,6 +118,7 @@ public class DatabaseAccess extends AppCompatActivity{
             markerName = new String[50];
             markerLat = new double[50];
             markerLng = new double[50];
+            numMarkers = 0;
             try {
                 String request = "http://php-tsorenson.rhcloud.com/androidGet.php";
                 URL url = new URL(request);
@@ -151,7 +129,6 @@ public class DatabaseAccess extends AppCompatActivity{
                 while( (line = br.readLine()) != null){
                     String[] marker = line.split(",");
                     marker[2] = marker[2].replace(";<br />", " ");
-                    //marker[2].trim();
                     storeMarker(marker);
                     numMarkers++;
                 }
@@ -172,4 +149,3 @@ public class DatabaseAccess extends AppCompatActivity{
             markerLng[numMarkers] = Double.parseDouble(marker[2]);
         }
     }
-}

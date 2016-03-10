@@ -18,30 +18,53 @@ public class AddLocationActivity extends AppCompatActivity{
     EditText locationName;
     Button submit;
     LatLng locationForMap;
+    DatabaseAccess db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_location);
+
+        //Get location from the MapsActivity
         Bundle bundle = getIntent().getParcelableExtra("Bundle");
         locationForMap = bundle.getParcelable("Location");
+
+        //Set up all the user inputs
         setInputs();
-        submit = (Button) findViewById(R.id.ratingSubmit);
+
+        //Submit button listener
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent post = new Intent(AddLocationActivity.this, DatabaseAccess.class);
-                Bundle info = new Bundle();
-                info.putString("Name", locationName.getText().toString());
-                info.putParcelable("LatLng", locationForMap);
-                info.putBoolean("IsPost", true);
-                post.putExtra("Bundle", info);
-                startActivity(post);
+                sendToDb();
+                returnToMap();
             }
         });
     }
 
     public void setInputs() {
         locationName = (EditText) findViewById(R.id.locationName);
+        submit = (Button) findViewById(R.id.ratingSubmit);
+    }
+
+    public void sendToDb() {
+        //Send the post request
+        db = new DatabaseAccess(
+                locationName.getText().toString(),
+                locationForMap,
+                true);
+        db.runAction();
+    }
+
+    public void returnToMap() {
+        //Return to the map with the added locations
+        Intent returnToMap = new Intent(AddLocationActivity.this, MapsActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putInt("NumberOfLocations", db.numMarkers);
+        bundle.putStringArray("Names", db.markerName);
+        bundle.putDoubleArray("Lats", db.markerLat);
+        bundle.putDoubleArray("Long", db.markerLng);
+        returnToMap.putExtra("Bundle", bundle);
+        startActivity(returnToMap);
     }
 }
