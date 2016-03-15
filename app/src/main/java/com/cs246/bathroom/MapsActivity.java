@@ -8,6 +8,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.provider.ContactsContract;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -28,6 +29,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    boolean userLocation = false;
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
     CoordinatorLayout coordinatorLayout;
     LocationManager locationManager;
@@ -71,7 +73,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
     }
 
-
     /**
      * Manipulates the map once available.
      */
@@ -96,6 +97,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         mMap.setMyLocationEnabled(true);
+        if (userLocation) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
+                    usersCurrentLocation.getLatitude(), usersCurrentLocation.getLongitude()), 15));
+        }
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
@@ -207,6 +212,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     // permission was granted, yay! Do the
                     // location-related task you need to do.
+                    userLocation = true;
                 } else {
 
                     // permission denied, boo! Disable the
@@ -227,11 +233,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected Object doInBackground(Object[] params) {
-            Bundle bundle = getIntent().getParcelableExtra("Bundle");
-            numMarkers = bundle.getInt("NumberOfLocations");
-            names = bundle.getStringArray("Names");
-            lats = bundle.getDoubleArray("Lats");
-            longs = bundle.getDoubleArray("Long");
+            numMarkers = DatabaseAccess.numMarkers;
+            names = DatabaseAccess.usernames;
+            lats = DatabaseAccess.markerLat;
+            longs = DatabaseAccess.markerLng;
             for (int i = 0;i < numMarkers;i++) {
                 final int finalI = i;
                 runOnUiThread(new Runnable() {

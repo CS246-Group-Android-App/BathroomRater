@@ -36,6 +36,7 @@ import java.util.ArrayList;
  * Created by tyler on 2/26/16.
  */
     public class DatabaseAccess {
+        public static boolean done = true;
         //PHP database names
         public static final String KEY_NAME = "name";
         public static final String KEY_LAT = "lat";
@@ -52,8 +53,12 @@ import java.util.ArrayList;
         public static double[] markerLat;
         public static double[] markerLng;
         public static int numMarkers;
+        public static int numUsers;
+        public static String[] usernames;
+        public static String[] userPass;
 
         DatabaseAccess(String name, LatLng position, boolean isPost) {
+            done = false;
             this.name = name;
             this.lat = position.latitude;
             this.lng = position.longitude;
@@ -66,13 +71,24 @@ import java.util.ArrayList;
                 public void run() {
                     if (isPost) {
                         post();
-                        numMarkers = getMethod();
+                        if (name.equals("login")) {
+                            numUsers = getMethod();
+                        }
+                        else {
+                            numMarkers = getMethod();
+                        }
                     }
                     else {
-                        numMarkers = getMethod();
+                        if (name.equals("login")) {
+                            numUsers = getMethod();
+                        }
+                        else {
+                            numMarkers = getMethod();
+                        }
                     }
                     if (numMarkers == 0)
                         Log.d("Markers", Integer.toString(numMarkers));
+                    done = true;
                 }
             }).start();
         }
@@ -121,22 +137,39 @@ import java.util.ArrayList;
             markerLat = new double[50];
             markerLng = new double[50];
             numMarkers = 0;
+            numUsers = 0;
+            usernames = new String[50];
+            userPass = new String[50];
             try {
-                String request = "http://php-tsorenson.rhcloud.com/androidGet.php";
-                URL url = new URL(request);
+                String requestMarkers = "http://php-tsorenson.rhcloud.com/androidGet.php";
+                String requestUsers = "http://php-tsorenson.rhcloud.com/getUsers.php";
+                URL url;
+                if (name.equals("login")) {
+                    url = new URL(requestUsers);
+                }
+                else {
+                    url = new URL(requestMarkers);
+                }
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 InputStreamReader in = new InputStreamReader(conn.getInputStream());
                 BufferedReader br = new BufferedReader(in);
                 String line = null;
                 while( (line = br.readLine()) != null){
-                    String[] marker = line.split(",");
-                    marker[2] = marker[2].replace(";<br />", " ");
-                    storeMarker(marker);
-                    numMarkers++;
+                    if(name.equals("login")) {
+                        readUsers(line);
+                    }
+                    else {
+                        readMarkers(line);
+                    }
                 }
 
                 conn.disconnect();
-                return numMarkers;
+                if (name.equals("login")) {
+                    return numUsers;
+                }
+                else {
+                    return numMarkers;
+                }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -145,9 +178,28 @@ import java.util.ArrayList;
             return 0;
         }
 
+        public void readMarkers(String line) {
+            String[] marker = line.split(",");
+            marker[2] = marker[2].replace(";<br />", " ");
+            storeMarker(marker);
+            numMarkers++;
+        }
+
+        public void readUsers(String line) {
+            String[] user = line.split(",");
+            user[1] = user[1].replace(";<br />", "");
+            storeUsers(user);
+            numUsers++;
+        }
+
         public void storeMarker(String[] marker) {
             markerName[numMarkers] = marker[0];
             markerLat[numMarkers] = Double.parseDouble(marker[1]);
             markerLng[numMarkers] = Double.parseDouble(marker[2]);
+        }
+
+        public void storeUsers(String[] users) {
+            usernames[numUsers] = users[0];
+            userPass[numUsers] = users[1];
         }
     }

@@ -65,12 +65,6 @@ public class AddLocationActivity extends AppCompatActivity{
         Log.i("ActivitySwitch", "Switching to Map Activity");
         //Return to the map with the added locations
         Intent returnToMap = new Intent(AddLocationActivity.this, MapsActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putInt("NumberOfLocations", db.numMarkers);
-        bundle.putStringArray("Names", db.markerName);
-        bundle.putDoubleArray("Lats", db.markerLat);
-        bundle.putDoubleArray("Long", db.markerLng);
-        returnToMap.putExtra("Bundle", bundle);
         startActivity(returnToMap);
     }
 }

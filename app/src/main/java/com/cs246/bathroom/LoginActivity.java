@@ -52,9 +52,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * A dummy authentication store containing known user names and passwords.
      * TODO: remove after connecting to a real authentication system.
      */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
+    /*private static final String[] DUMMY_CREDENTIALS = new String[]{
             "foo@example.com:hello", "bar@example.com:world"
-    };
+    };*/
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -100,6 +100,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mProgressView = findViewById(R.id.login_progress);
     }
 
+    public void waitForTask() {
+        while (!DatabaseAccess.done) {
+            try {
+                wait(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     private void populateAutoComplete() {
         if (!mayRequestContacts()) {
             return;
@@ -205,7 +214,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
-        return password.length() > 4;
+        return true;
     }
 
     /**
@@ -316,25 +325,25 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
 
-            db = new DatabaseAccess("", new LatLng(0,0), false);
+            //Get User Credentials
+            Log.i("Login", "Attempting validation");
+            db = new DatabaseAccess("login", new LatLng(0,0), false);
             db.runAction();
+            //waitForTask();
 
-            while (DatabaseAccess.numMarkers == 0) {
-                try {
-                    Thread.sleep(100);
+            while(DatabaseAccess.numUsers > 0) {
+                for (int i = 0; i < DatabaseAccess.numUsers; i++) {
+                    if (DatabaseAccess.usernames[i].equals(mEmail)) {
+                        Log.i("login", "Correct User email found");
+                        if (DatabaseAccess.userPass[i].equals(mPassword)) {
+                            Log.i("login", "Correct Password found");
+                            return true;
+                        }
+                    }
                 }
-                catch (Exception ex) {}
             }
-            /*for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }*/
-
             // TODO: register the new account here.
-            return true;
+            return false;
         }
 
         @Override
@@ -343,18 +352,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(true);
 
             if (success) {
+                //Get Saved Markers if valid user
+                db = new DatabaseAccess("", new LatLng(0,0), false);
+                db.runAction();
+                //waitForTask();
+
+                //Go to maps class
                 Intent returnToMap = new Intent(LoginActivity.this, MapsActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putInt("NumberOfLocations", DatabaseAccess.numMarkers);
-                bundle.putStringArray("Names", DatabaseAccess.markerName);
-                bundle.putDoubleArray("Lats", DatabaseAccess.markerLat);
-                bundle.putDoubleArray("Long", DatabaseAccess.markerLng);
-                returnToMap.putExtra("Bundle", bundle);
                 startActivity(returnToMap);
                 finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
+                showProgress(false);
             }
         }
 
