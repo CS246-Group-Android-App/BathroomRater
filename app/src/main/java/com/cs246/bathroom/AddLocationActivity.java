@@ -2,6 +2,7 @@ package com.cs246.bathroom;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -14,7 +15,7 @@ import com.google.android.gms.maps.model.LatLng;
 /**Class used to create new save bathrooms
  * Created by tyler on 2/25/16.
  */
-public class AddLocationActivity extends AppCompatActivity{
+public class AddLocationActivity extends AppCompatActivity {
 
     EditText locationName;
     Button submit;
@@ -40,7 +41,8 @@ public class AddLocationActivity extends AppCompatActivity{
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendToDb();
+                savedNewLocation send = new savedNewLocation();
+                send.execute();
                 returnToMap();
             }
         });
@@ -55,17 +57,7 @@ public class AddLocationActivity extends AppCompatActivity{
         submit = (Button) findViewById(R.id.ratingSubmit);
     }
 
-    /**
-     * Sends new location to database for saving
-     */
-    public void sendToDb() {
-        //Send the post request
-        db = new DatabaseAccess(
-                locationName.getText().toString(),
-                locationForMap,
-                true);
-        db.runAction();
-    }
+
 
     /**
      * Returns to the map for the user to continue browsing
@@ -76,5 +68,25 @@ public class AddLocationActivity extends AppCompatActivity{
         //Return to the map with the added locations
         Intent returnToMap = new Intent(AddLocationActivity.this, MapsActivity.class);
         startActivity(returnToMap);
+    }
+    public class savedNewLocation extends AsyncTask<Void, Void, Void> {
+        /**
+         * Sends new location to database for saving
+         */
+        public void sendToDb() {
+            //Send the post request
+            db = new DatabaseAccess(
+                    locationName.getText().toString(),
+                    locationForMap,
+                    true);
+            db.runAction();
+        }
+
+        @Override
+        protected Void doInBackground(Void ... params) {
+            sendToDb();
+            return null;
+        }
+
     }
 }

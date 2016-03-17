@@ -75,31 +75,26 @@ import java.util.ArrayList;
      * Performs get and post on a secondary thread
      */
         public void runAction() {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    if (isPost) {
-                        post();
-                        if (name.equals("login")) {
-                            numUsers = getMethod();
-                        }
-                        else {
-                            numMarkers = getMethod();
-                        }
-                    }
-                    else {
-                        if (name.equals("login")) {
-                            numUsers = getMethod();
-                        }
-                        else {
-                            numMarkers = getMethod();
-                        }
-                    }
-                    if (numMarkers == 0)
-                        Log.d("Markers", Integer.toString(numMarkers));
-                    done = true;
+            if (isPost) {
+                post();
+                if (name.equals("login")) {
+                    numUsers = getMethod();
                 }
-            }).start();
+                else {
+                    numMarkers = getMethod();
+                }
+            }
+            else {
+                if (name.equals("login")) {
+                    numUsers = getMethod();
+                }
+                else {
+                    numMarkers = getMethod();
+                }
+            }
+            if (numMarkers == 0)
+                Log.d("Markers", Integer.toString(numMarkers));
+            done = true;
         }
 
     /**

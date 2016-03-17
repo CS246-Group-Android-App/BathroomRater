@@ -359,16 +359,21 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             Log.i("Login", "Attempting validation");
             db = new DatabaseAccess("login", new LatLng(0,0), false);
             db.runAction();
-            //waitForTask();
 
-            while(DatabaseAccess.numUsers > 0) {
-                for (int i = 0; i < DatabaseAccess.numUsers; i++) {
-                    if (DatabaseAccess.usernames[i].equals(mEmail)) {
-                        Log.i("login", "Correct User email found");
-                        if (DatabaseAccess.userPass[i].equals(mPassword)) {
-                            Log.i("login", "Correct Password found");
-                            return true;
-                        }
+            //Wait for users to populate before validation
+            waitForTask();
+
+            for (int i = 0; i < DatabaseAccess.numUsers; i++) {
+                if (DatabaseAccess.usernames[i].equals(mEmail)) {
+                    Log.i("login", "Correct User email found");
+                    if (DatabaseAccess.userPass[i].equals(mPassword)) {
+                        Log.i("login", "Correct Password found");
+                        //Get Saved Markers if valid user
+                        db = new DatabaseAccess("", new LatLng(0,0), false);
+                        db.runAction();
+                        //Wait for the locations to be retrieved
+                        waitForTask();
+                        return true;
                     }
                 }
             }
@@ -386,11 +391,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(true);
 
             if (success) {
-                //Get Saved Markers if valid user
-                db = new DatabaseAccess("", new LatLng(0,0), false);
-                db.runAction();
-                //waitForTask();
-
                 //Go to maps class
                 Intent returnToMap = new Intent(LoginActivity.this, MapsActivity.class);
                 startActivity(returnToMap);

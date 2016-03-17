@@ -32,7 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    boolean userLocation = false;
+    boolean userLocation = true;
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
     CoordinatorLayout coordinatorLayout;
     LocationManager locationManager;
@@ -56,6 +56,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Set up button listener
         setInputs();
+
         addLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,8 +87,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Read locations from Database
         ReadLocationsFromDatabase read = new ReadLocationsFromDatabase();
         read.execute();
-
-
 
         if (ActivityCompat.checkSelfPermission
                 (this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
@@ -186,8 +185,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         usersCurrentLocation = locationManager.getLastKnownLocation(locationProvider);
         if (usersCurrentLocation == null) {
             usersCurrentLocation = new Location("fakeLocation");
-            usersCurrentLocation.setLatitude(0);
-            usersCurrentLocation.setLongitude(0);
+            usersCurrentLocation.setLatitude(37);
+            usersCurrentLocation.setLongitude(-120);
         }
     }
 
@@ -217,7 +216,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     // location-related task you need to do.
                     userLocation = true;
                 } else {
-
+                    userLocation = false;
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                 }
@@ -240,7 +239,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected Object doInBackground(Object[] params) {
             numMarkers = DatabaseAccess.numMarkers;
-            names = DatabaseAccess.usernames;
+            names = DatabaseAccess.markerName;
             lats = DatabaseAccess.markerLat;
             longs = DatabaseAccess.markerLng;
             for (int i = 0;i < numMarkers;i++) {
