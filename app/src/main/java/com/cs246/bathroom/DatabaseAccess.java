@@ -32,7 +32,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
-/**
+/**Class used to access the MYSQL database for users credentials and map markers
  * Created by tyler on 2/26/16.
  */
     public class DatabaseAccess {
@@ -57,6 +57,12 @@ import java.util.ArrayList;
         public static String[] usernames;
         public static String[] userPass;
 
+    /**
+     * Database access constructor
+     * @param name
+     * @param position
+     * @param isPost
+     */
         DatabaseAccess(String name, LatLng position, boolean isPost) {
             done = false;
             this.name = name;
@@ -65,6 +71,9 @@ import java.util.ArrayList;
             this.isPost = isPost;
         }
 
+    /**
+     * Performs get and post on a secondary thread
+     */
         public void runAction() {
             new Thread(new Runnable() {
                 @Override
@@ -93,6 +102,10 @@ import java.util.ArrayList;
             }).start();
         }
 
+    /**
+     * Method for Post actions to database/saving new markers
+     * @return
+     */
         public String post() {
             try {
                 String urlParameters = KEY_NAME + "=" + name + "&" +
@@ -132,6 +145,10 @@ import java.util.ArrayList;
             return null;
         }
 
+    /**
+     * Method used to get saved markers and users credentials
+     * @return
+     */
         public int getMethod() {
             markerName = new String[50];
             markerLat = new double[50];
@@ -178,6 +195,10 @@ import java.util.ArrayList;
             return 0;
         }
 
+    /**
+     * Takes the line in from the reader and parses it into variables
+     * @param line
+     */
         public void readMarkers(String line) {
             String[] marker = line.split(",");
             marker[2] = marker[2].replace(";<br />", " ");
@@ -192,12 +213,21 @@ import java.util.ArrayList;
             numUsers++;
         }
 
+        /**Method used to store the read markers from the DB to the static variables
+         * for later access. No return value.
+         *
+         * @param marker
+         */
         public void storeMarker(String[] marker) {
             markerName[numMarkers] = marker[0];
             markerLat[numMarkers] = Double.parseDouble(marker[1]);
             markerLng[numMarkers] = Double.parseDouble(marker[2]);
         }
 
+    /**
+     * stores the parsed data into static variables for universal access
+     * @param users
+     */
         public void storeUsers(String[] users) {
             usernames[numUsers] = users[0];
             userPass[numUsers] = users[1];

@@ -11,7 +11,7 @@ import android.widget.EditText;
 
 import com.google.android.gms.maps.model.LatLng;
 
-/**
+/**Class used to create new save bathrooms
  * Created by tyler on 2/25/16.
  */
 public class AddLocationActivity extends AppCompatActivity{
@@ -46,11 +46,18 @@ public class AddLocationActivity extends AppCompatActivity{
         });
     }
 
+    /**
+     * sets the inputs for the users information(EditText & Submit button)
+     * TODO:Add other form inputs
+     */
     public void setInputs() {
         locationName = (EditText) findViewById(R.id.locationName);
         submit = (Button) findViewById(R.id.ratingSubmit);
     }
 
+    /**
+     * Sends new location to database for saving
+     */
     public void sendToDb() {
         //Send the post request
         db = new DatabaseAccess(
@@ -60,6 +67,9 @@ public class AddLocationActivity extends AppCompatActivity{
         db.runAction();
     }
 
+    /**
+     * Returns to the map for the user to continue browsing
+     */
     public void returnToMap() {
 
         Log.i("ActivitySwitch", "Switching to Map Activity");
