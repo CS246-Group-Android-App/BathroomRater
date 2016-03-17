@@ -26,6 +26,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+/**
+ * Use the Google maps API to set locations
+ */
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -226,6 +229,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * Read locations from DB and show markers
+     */
     private class ReadLocationsFromDatabase extends AsyncTask {
         ReadLocationsFromDatabase() {
 
@@ -249,6 +255,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return null;
         }
 
+        /**
+         * Completed submission
+         * @param o
+         */
         @Override
         protected void onPostExecute(Object o) {
             super.onPostExecute(o);

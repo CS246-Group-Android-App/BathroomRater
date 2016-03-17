@@ -32,6 +32,12 @@
         android:id="@+id/radioButton"
         android:checked="false" />
 
+    <RadioButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Handicap"
+        android:id="@+id/radioButton2" />
+
     <RatingBar
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
