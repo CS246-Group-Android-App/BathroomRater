@@ -32,37 +32,48 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
-/**Class used to access the MYSQL database for users credentials and map markers
- * Created by tyler on 2/26/16.
- */
+    /**Class used to access the MYSQL database for users credentials and map markers
+     * Created by tyler on 2/26/16.
+     */
     public class DatabaseAccess {
         public static boolean done = true;
         //PHP database names
         public static final String KEY_NAME = "name";
         public static final String KEY_LAT = "lat";
         public static final String KEY_LNG = "lng";
+        public static final String KEY_STARS = "stars";
+        public static final String KEY_HAND = "handi";
+        public static final String KEY_CHANGE = "change";
+        public static final String KEY_COMMENTS = "comments";
         //Gathered from constructor
         String name;
         double lat;
         double lng;
         boolean isPost;
+        Bundle addInfo = null;
         //For Post method
         String response = null;
         //For Get Method
+        //Marker Variables
         public static String[] markerName;
         public static double[] markerLat;
         public static double[] markerLng;
+        public static int[] markerStars;
+        public static String[] markerHand;
+        public static String[] markerChange;
+        public static String[] markerComments;
         public static int numMarkers;
+        //User Variables
         public static int numUsers;
         public static String[] usernames;
         public static String[] userPass;
 
-    /**
-     * Database access constructor
-     * @param name
-     * @param position
-     * @param isPost
-     */
+        /**
+         * Database access constructor
+         * @param name
+         * @param position
+         * @param isPost
+         */
         DatabaseAccess(String name, LatLng position, boolean isPost) {
             done = false;
             this.name = name;
@@ -71,9 +82,25 @@ import java.util.ArrayList;
             this.isPost = isPost;
         }
 
-    /**
-     * Performs get and post on a secondary thread
-     */
+        /**
+         * Non Default Database constructor for extra marker info
+         * @param name
+         * @param position
+         * @param isPost
+         * @param addInfo
+         */
+        DatabaseAccess(String name, LatLng position, boolean isPost, Bundle addInfo) {
+            done = false;
+            this.name = name;
+            this.lat = position.latitude;
+            this.lng = position.longitude;
+            this.addInfo = addInfo;
+            this.isPost = isPost;
+        }
+
+        /**
+         * Performs get and post on a secondary thread
+         */
         public void runAction() {
             if (isPost) {
                 post();
@@ -97,39 +124,17 @@ import java.util.ArrayList;
             done = true;
         }
 
-    /**
-     * Method for Post actions to database/saving new markers
-     * @return
-     */
+        /**
+         * Method for Post actions to database/saving new markers
+         * @return
+         */
         public String post() {
             try {
-                String urlParameters = KEY_NAME + "=" + name + "&" +
-                        KEY_LAT + "=" + lat + "&" + KEY_LNG + "=" + lng;
-                byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
-                int postDataLength = postData.length;
-                String request = "http://php-tsorenson.rhcloud.com/androidPost.php";
-                URL url = new URL(request);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setDoOutput(true);
-                conn.setInstanceFollowRedirects(false);
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                conn.setRequestProperty("charset", "utf-8");
-                conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
-                conn.setUseCaches(false);
-                try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-                    wr.write(postData);
+                if(addInfo == null)
+                    postNoAdd();
+                else {
+                    postAdd();
                 }
-
-                InputStream in = new BufferedInputStream(conn.getInputStream());
-                byte[] contents = new byte[1024];
-                int bytesRead=0;
-                while( (bytesRead = in.read(contents)) != -1){
-                    response += new String(contents, 0, bytesRead);
-                }
-                Log.d("Retrieved", response);
-                conn.disconnect();
-                return response;
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (ProtocolException e) {
@@ -140,48 +145,31 @@ import java.util.ArrayList;
             return null;
         }
 
-    /**
-     * Method used to get saved markers and users credentials
-     * @return
-     */
+        /**
+         * Method used to get saved markers and users credentials
+         * @return
+         */
         public int getMethod() {
-            markerName = new String[50];
-            markerLat = new double[50];
-            markerLng = new double[50];
-            numMarkers = 0;
-            numUsers = 0;
-            usernames = new String[50];
-            userPass = new String[50];
+
             try {
-                String requestMarkers = "http://php-tsorenson.rhcloud.com/androidGet.php";
-                String requestUsers = "http://php-tsorenson.rhcloud.com/getUsers.php";
-                URL url;
                 if (name.equals("login")) {
-                    url = new URL(requestUsers);
+                    numUsers = 0;
+                    usernames = new String[50];
+                    userPass = new String[50];
+                    return getUser();
                 }
                 else {
-                    url = new URL(requestMarkers);
-                }
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                InputStreamReader in = new InputStreamReader(conn.getInputStream());
-                BufferedReader br = new BufferedReader(in);
-                String line = null;
-                while( (line = br.readLine()) != null){
-                    if(name.equals("login")) {
-                        readUsers(line);
-                    }
-                    else {
-                        readMarkers(line);
-                    }
+                    markerName = new String[50];
+                    markerLat = new double[50];
+                    markerLng = new double[50];
+                    markerStars = new int[50];
+                    markerChange = new String[50];
+                    markerHand = new String[50];
+                    markerComments = new String[50];
+                    numMarkers = 0;
+                    return getMarkers();
                 }
 
-                conn.disconnect();
-                if (name.equals("login")) {
-                    return numUsers;
-                }
-                else {
-                    return numMarkers;
-                }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -190,17 +178,130 @@ import java.util.ArrayList;
             return 0;
         }
 
-    /**
-     * Takes the line in from the reader and parses it into variables
-     * @param line
-     */
+        /**
+         * Performs get method for marker locations
+         * @return
+         * @throws IOException
+         */
+        public int getMarkers() throws IOException {
+            String requestMarkers = "http://php-tsorenson.rhcloud.com/androidGet.php";
+            URL url;
+            url = new URL(requestMarkers);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            InputStreamReader in = new InputStreamReader(conn.getInputStream());
+            BufferedReader br = new BufferedReader(in);
+            String line = null;
+            while( (line = br.readLine()) != null){
+                readMarkers(line);
+            }
+            conn.disconnect();
+            return numMarkers;
+        }
+
+        /**
+         * Performs get method for user credentials
+         * @return
+         * @throws IOException
+         */
+        public int getUser() throws IOException {
+            String requestUsers = "http://php-tsorenson.rhcloud.com/getUsers.php";
+            URL url;
+            url = new URL(requestUsers);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            InputStreamReader in = new InputStreamReader(conn.getInputStream());
+            BufferedReader br = new BufferedReader(in);
+            String line = null;
+            while( (line = br.readLine()) != null){
+                readUsers(line);
+            }
+            conn.disconnect();
+            return numUsers;
+        }
+
+        /**
+         * Performs post method with additional information
+         * @throws IOException
+         */
+        public void postAdd() throws IOException {
+            String urlParameters = KEY_NAME + "=" + name + "&" +
+                    KEY_LAT + "=" + lat + "&" + KEY_LNG + "=" + lng  + "&" +
+                    KEY_STARS + "=" + addInfo.getInt("stars") + "&" +
+                    KEY_HAND + "=" + addInfo.getString("hand") + "&" +
+                    KEY_CHANGE + "=" + addInfo.getString("change") + "&" +
+                    KEY_COMMENTS + "=" + addInfo.getString("comments");
+            byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
+            int postDataLength = postData.length;
+            String request = "http://php-tsorenson.rhcloud.com/androidPost.php";
+            URL url = new URL(request);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoOutput(true);
+            conn.setInstanceFollowRedirects(false);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("charset", "utf-8");
+            conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
+            conn.setUseCaches(false);
+            try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+                wr.write(postData);
+            }
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            byte[] contents = new byte[1024];
+            int bytesRead=0;
+            while( (bytesRead = in.read(contents)) != -1){
+                response += new String(contents, 0, bytesRead);
+            }
+            Log.d("Retrieved", response);
+            conn.disconnect();
+        }
+
+        /**
+         * Performs post method without additional information
+         * @throws IOException
+         */
+        public void postNoAdd() throws IOException{
+            String urlParameters = KEY_NAME + "=" + name + "&" +
+                    KEY_LAT + "=" + lat + "&" + KEY_LNG + "=" + lng;
+            byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
+            int postDataLength = postData.length;
+            String request = "http://php-tsorenson.rhcloud.com/androidPost.php";
+            URL url = new URL(request);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoOutput(true);
+            conn.setInstanceFollowRedirects(false);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("charset", "utf-8");
+            conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
+            conn.setUseCaches(false);
+            try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+                wr.write(postData);
+            }
+
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            byte[] contents = new byte[1024];
+            int bytesRead=0;
+            while( (bytesRead = in.read(contents)) != -1){
+                response += new String(contents, 0, bytesRead);
+            }
+            Log.d("Retrieved", response);
+            conn.disconnect();
+        }
+
+        /**
+         * Takes the line in from the reader and parses it into Google maps markers
+         * @param line
+         */
         public void readMarkers(String line) {
             String[] marker = line.split(",");
-            marker[2] = marker[2].replace(";<br />", " ");
+            marker[6] = marker[6].replace(";<br />", " ");
             storeMarker(marker);
             numMarkers++;
         }
 
+        /**
+         * Takes the line in from the reader and parses it into user variables
+         * @param line
+         */
         public void readUsers(String line) {
             String[] user = line.split(",");
             user[1] = user[1].replace(";<br />", "");
@@ -217,12 +318,16 @@ import java.util.ArrayList;
             markerName[numMarkers] = marker[0];
             markerLat[numMarkers] = Double.parseDouble(marker[1]);
             markerLng[numMarkers] = Double.parseDouble(marker[2]);
+            markerStars[numMarkers] = Integer.valueOf(marker[3]);
+            markerChange[numMarkers] = marker[4];
+            markerHand[numMarkers] = marker[5];
+            markerComments[numMarkers] = marker[6];
         }
 
-    /**
-     * stores the parsed data into static variables for universal access
-     * @param users
-     */
+        /**
+         * stores the parsed data into static variables for universal access
+         * @param users
+         */
         public void storeUsers(String[] users) {
             usernames[numUsers] = users[0];
             userPass[numUsers] = users[1];

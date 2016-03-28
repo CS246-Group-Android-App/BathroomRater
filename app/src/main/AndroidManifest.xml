@@ -41,6 +41,8 @@
         <activity
             android:name=".AddLocationActivity"
             android:label="Add Location" />
+        <activity android:name=".LocationDetails"
+            android:label="Location Details" />
     </application>
 
 </manifest>

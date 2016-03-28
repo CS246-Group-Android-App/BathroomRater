@@ -373,8 +373,6 @@ public class LoginActivity extends AppCompatActivity
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-
             //Get User Credentials
             Log.i("Login", "Attempting validation");
             db = new DatabaseAccess("login", new LatLng(0,0), false);
@@ -414,7 +412,6 @@ public class LoginActivity extends AppCompatActivity
                 //Go to maps class
                 Intent returnToMap = new Intent(LoginActivity.this, MapsActivity.class);
                 startActivity(returnToMap);
-
                 finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));

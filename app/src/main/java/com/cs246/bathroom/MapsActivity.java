@@ -10,10 +10,18 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.provider.ContactsContract;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -26,10 +34,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Use the Google maps API to set locations
  */
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
     private GoogleMap mMap;
     boolean userLocation = true;
@@ -38,18 +49,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LocationManager locationManager;
     LocationListener locationListener;
     Location usersCurrentLocation;
-    LinearLayout buttonPanel;
     Button addLocation;
     Marker currentMarker;
     int numMarkers;
-    String[] names;
+    int[] stars;
+    String[] names, comments, hand, change;
     double[] lats;
     double[] longs;
+    Map markerInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ratings);
+        setContentView(R.layout.map_nav);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
 
         //Get the users location
         setUpUserLocation();
@@ -60,14 +83,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         addLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent addLocationForm = new Intent(MapsActivity.this, AddLocationActivity.class);
-                addLocationForm.putExtra("Location", currentMarker.getPosition().toString());
-                Bundle markerLocation = new Bundle();
-                LatLng position = currentMarker.getPosition();
-                markerLocation.putParcelable("Location", position);
-                addLocationForm.putExtra("Bundle", markerLocation);
-                startActivity(addLocationForm);
-                stopLocationListner();
+                if(currentMarker.getTitle().equals("Click add location to add a rating!")) {
+                    Intent addLocationForm = new Intent(MapsActivity.this, AddLocationActivity.class);
+                    addLocationForm.putExtra("Location", currentMarker.getPosition().toString());
+                    Bundle markerLocation = new Bundle();
+                    LatLng position = currentMarker.getPosition();
+                    markerLocation.putParcelable("Location", position);
+                    addLocationForm.putExtra("Bundle", markerLocation);
+                    startActivity(addLocationForm);
+                    stopLocationListner();
+                }
+                else {
+                    Intent getLocationDetails = new Intent(MapsActivity.this, LocationDetails.class);
+                    Bundle info = new Bundle();
+                    info.putString("Name", currentMarker.getTitle());
+                    Bundle values = findMarkerInfo(currentMarker);
+                    info.putBundle("Info", values);
+                    getLocationDetails.putExtra("Bundle", info);
+                    startActivity(getLocationDetails);
+                    stopLocationListner();
+                }
             }
         });
 
@@ -95,8 +130,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
-
-
+        mMap.setPadding(0, 250, 0, 0);
 
         mMap.setMyLocationEnabled(true);
         if (userLocation) {
@@ -114,8 +148,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public boolean onMarkerClick(Marker marker) {
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15));
+                if(!marker.getTitle().equals("Click add location to add a rating!")) {
+                    addLocation.setText("View Details");
+                }
                 marker.showInfoWindow();
-                buttonPanel.setVisibility(View.VISIBLE);
+                addLocation.setVisibility(View.VISIBLE);
+                mMap.setPadding(0, 250, 0, 200);
                 currentMarker = marker;
                 return false;
             }
@@ -123,20 +161,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnInfoWindowCloseListener(new GoogleMap.OnInfoWindowCloseListener() {
             @Override
             public void onInfoWindowClose(Marker marker) {
-                buttonPanel.setVisibility(View.GONE);
+                addLocation.setVisibility(View.GONE);
+                addLocation.setText("Add location");
+                mMap.setPadding(0,250,0,0);
             }
         });
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
-            View.OnClickListener undoOnClickListener;
-
             @Override
             public void onInfoWindowLongClick(final Marker marker) {
-                marker.remove();
-                Snackbar.make(coordinatorLayout, "Marker removed", Snackbar.LENGTH_LONG)
-                        .setAction("Undo", undoOnClickListener)
-                        .show();
-
-                undoOnClickListener = new View.OnClickListener() {
+                View.OnClickListener undoOnClickListener = new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         mMap.addMarker(new MarkerOptions()
@@ -144,6 +177,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 .title("Click add location to add a rating!"));
                     }
                 };
+
+                if(!marker.getTitle().equals("Click add location to add a rating!")) {
+                    Snackbar.make(coordinatorLayout, "Cannot removed this location!", Snackbar.LENGTH_LONG)
+                            .show();
+                    return;
+                }
+                marker.remove();
+                Snackbar.make(coordinatorLayout, "Marker removed", Snackbar.LENGTH_LONG)
+                        .setAction("Undo", undoOnClickListener)
+                        .show();
+
             }
         });
 
@@ -192,7 +236,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void setInputs() {
         addLocation = (Button) findViewById(R.id.addLocation);
-        buttonPanel = (LinearLayout) findViewById(R.id.buttonPanel);
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinateLayout);
     }
 
@@ -242,12 +285,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             names = DatabaseAccess.markerName;
             lats = DatabaseAccess.markerLat;
             longs = DatabaseAccess.markerLng;
+            stars = DatabaseAccess.markerStars;
+            hand = DatabaseAccess.markerHand;
+            comments = DatabaseAccess.markerComments;
+            change = DatabaseAccess.markerChange;
+            markerInfo = new HashMap();
             for (int i = 0;i < numMarkers;i++) {
                 final int finalI = i;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(lats[finalI], longs[finalI])).title(names[finalI]));
+                        Marker marker = null;
+                        Bundle info = new Bundle();
+                        marker = mMap.addMarker(new MarkerOptions().position(new LatLng(lats[finalI], longs[finalI])).title(names[finalI]));
+                        info.putInt("stars", stars[finalI]);
+                        info.putString("hand", hand[finalI]);
+                        info.putString("change", change[finalI]);
+                        info.putString("comments", comments[finalI]);
+                        markerInfo.put(marker, info);
                     }
                 });
             }
@@ -269,5 +324,74 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             });
         }
+    }
+
+    /**
+     * Returns the info Bundle for the marker given
+     * @param marker
+     * @return
+     */
+    private Bundle findMarkerInfo(Marker marker) {
+        if (markerInfo.containsKey(marker)) {
+            return (Bundle) markerInfo.get(marker);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_camara) {
+            // Handle the camera action
+        } else if (id == R.id.nav_gallery) {
+
+        } else if (id == R.id.nav_slideshow) {
+
+        } else if (id == R.id.nav_manage) {
+
+        } else if (id == R.id.nav_share) {
+
+        } else if (id == R.id.nav_send) {
+
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.options_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
