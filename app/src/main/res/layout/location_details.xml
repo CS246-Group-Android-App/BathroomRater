@@ -25,6 +25,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
         android:text="Amenities"
         android:id="@+id/textView4" />
 
@@ -36,6 +38,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
             android:id="@+id/amenitiesText"/>
     </LinearLayout>
 
@@ -43,6 +47,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
         android:text="Comments"
         android:id="@+id/textView5" />
 
@@ -54,6 +60,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
             android:id="@+id/commentsText"/>
     </LinearLayout>
 

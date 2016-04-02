@@ -179,7 +179,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 };
 
                 if(!marker.getTitle().equals("Click add location to add a rating!")) {
-                    Snackbar.make(coordinatorLayout, "Cannot removed this location!", Snackbar.LENGTH_LONG)
+                    Snackbar.make(coordinatorLayout, "Cannot remove this location!", Snackbar.LENGTH_LONG)
                             .show();
                     return;
                 }
