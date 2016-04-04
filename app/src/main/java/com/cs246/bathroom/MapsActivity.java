@@ -15,6 +15,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -74,8 +75,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        //Get the users location
-        setUpUserLocation();
+        if (ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == 0) {
+            //Get the users location
+            setUpUserLocation();
+        }
 
         //Set up button listener
         setInputs();
@@ -83,7 +94,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         addLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(currentMarker.getTitle().equals("Click add location to add a rating!")) {
+                if (currentMarker.getTitle().equals("Click add location to add a rating!")) {
                     Intent addLocationForm = new Intent(MapsActivity.this, AddLocationActivity.class);
                     addLocationForm.putExtra("Location", currentMarker.getPosition().toString());
                     Bundle markerLocation = new Bundle();
@@ -92,8 +103,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     addLocationForm.putExtra("Bundle", markerLocation);
                     startActivity(addLocationForm);
                     stopLocationListner();
-                }
-                else {
+                } else {
                     Intent getLocationDetails = new Intent(MapsActivity.this, LocationDetails.class);
                     Bundle info = new Bundle();
                     info.putString("Name", currentMarker.getTitle());
@@ -123,20 +133,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         ReadLocationsFromDatabase read = new ReadLocationsFromDatabase();
         read.execute();
 
-        if (ActivityCompat.checkSelfPermission
-                (this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission
-                (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
         mMap.setPadding(0, 250, 0, 0);
 
-        mMap.setMyLocationEnabled(true);
-        if (userLocation) {
+
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == 0) {
+            mMap.setMyLocationEnabled(true);
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
                     usersCurrentLocation.getLatitude(), usersCurrentLocation.getLongitude()), 15));
         }
+
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
@@ -148,7 +154,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMarkerClick(Marker marker) {
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 15));
-                if(!marker.getTitle().equals("Click add location to add a rating!")) {
+                if (!marker.getTitle().equals("Click add location to add a rating!")) {
                     addLocation.setText("View Details");
                 }
                 marker.showInfoWindow();
@@ -178,7 +184,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 };
 
-                if(!marker.getTitle().equals("Click add location to add a rating!")) {
+                if (!marker.getTitle().equals("Click add location to add a rating!")) {
                     Snackbar.make(coordinatorLayout, "Cannot remove this location!", Snackbar.LENGTH_LONG)
                             .show();
                     return;
@@ -217,20 +223,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             }
         };
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            //Request permission
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-
-            return;
-        }
-        locationManager.requestLocationUpdates(locationProvider, 0, 0, locationListener);
-        usersCurrentLocation = locationManager.getLastKnownLocation(locationProvider);
-        if (usersCurrentLocation == null) {
-            usersCurrentLocation = new Location("fakeLocation");
-            usersCurrentLocation.setLatitude(37);
-            usersCurrentLocation.setLongitude(-120);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == 0) {
+            locationManager.requestLocationUpdates(locationProvider, 0, 0, locationListener);
+            usersCurrentLocation = locationManager.getLastKnownLocation(locationProvider);
+            if (usersCurrentLocation == null) {
+                usersCurrentLocation = new Location("fakeLocation");
+                usersCurrentLocation.setLatitude(37);
+                usersCurrentLocation.setLongitude(-120);
+            }
         }
     }
 
@@ -263,7 +263,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                 }
-                return;
             }
 
             // other 'case' lines to check for other

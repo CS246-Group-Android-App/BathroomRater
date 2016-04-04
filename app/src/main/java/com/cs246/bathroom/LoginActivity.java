@@ -1,5 +1,6 @@
 package com.cs246.bathroom;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -8,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -55,6 +57,8 @@ public class LoginActivity extends AppCompatActivity
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
+    private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
+
 
     /**
      * A dummy authentication store containing known user names and passwords.
@@ -157,6 +161,13 @@ public class LoginActivity extends AppCompatActivity
                             requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
                         }
                     });
+        }
+        if (ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         } else {
             requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
         }
